@@ -1,47 +1,31 @@
 import java.util.Scanner;
+import java.util.InputMismatchException;
 
 public class PolishStyle {
   public static void main(String[] args) {
-    Stack stack = new Stack();
+    PolishStyleUI psui = new PolishStyleUI();
+    //menu
+    int mode = 1;
+    System.out.println("Select a mode :");
+    System.out.println("1. Run interpretor");
+    System.out.println("2. Run interpretor + log input");
+    System.out.println("3. Run from log file");
     Scanner sc = new Scanner(System.in);
-    String input;
-    boolean stop = false;
-    System.out.println("Press q to quit");
-    System.out.println("Anything other than number or operand will be ignored");
-    ask: while (!stop) {
-      input = sc.nextLine();
-      if(input.equals("q")) {
-        stop = true;
-        break ask;
-      }
-      String[] parts = input.split(" ");
-      for(String s : parts) {
-        try{
-          int value = Integer.parseInt(s);
-          Stackable obj = new Stackable(value);
-          stack.push(obj);
-        } catch(NumberFormatException nfe) {
-          //nfe.printStackTrace();
-          String operator = s;
-          switch(operator) {
-            case "+":
-              stack.add();
-              break;
-            case "-":
-              stack.sub();
-              break;
-            case "*":
-              stack.mult();
-              break;
-            case "/":
-              stack.div();
-              break;
-            default:
-              break;
-          }
+    boolean wrong = true;
+    askMode: do {
+      try {
+        mode = sc.nextInt();
+        System.out.println(mode);
+        if(mode>0 && mode<4){
+          wrong = false;
         }
+      } catch(InputMismatchException ime) {
+        //flush scanner content
+        sc.nextLine();
       }
-      System.out.println(stack);
-    }
+    } while(wrong);
+
+    psui.setMode(mode);
+    psui.run();
   }
 }
