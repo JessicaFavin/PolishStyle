@@ -56,7 +56,7 @@ public class Stack {
     for(int i=MAX; i>0; i--) {
       res += ("| ");
       if((obj = stack[i-1])!=null) {
-        res += String.valueOf(obj.getValue());
+        res += obj.toString();
       } else {
         res += " ";
       }
