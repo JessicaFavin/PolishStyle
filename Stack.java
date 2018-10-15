@@ -1,5 +1,5 @@
 public class Stack {
-  private final int MAX = 3;
+  private final int MAX = 6;
   private int stackPointer;
   private Stackable[] stack;
 
@@ -15,8 +15,11 @@ public class Stack {
   }
 
   public Stackable pop() {
-    Stackable x = stack[stackPointer-1];
-    stack[--stackPointer] = null;
+    Stackable x = null;
+    if(stackPointer>0){
+      x = stack[stackPointer-1];
+      stack[--stackPointer] = null;
+    }
     return x;
   }
 
@@ -52,16 +55,16 @@ public class Stack {
   public String toString() {
     String res = "";
     Stackable obj;
-    res+= "+---+\n";
+    res+= "+------+\n";
     for(int i=MAX; i>0; i--) {
       res += ("| ");
       if((obj = stack[i-1])!=null) {
-        res += obj.toString();
+        res += String.format("%4s", obj.toString());
       } else {
-        res += " ";
+        res += "    ";
       }
       res += (" |\n");
-      res+= "+---+\n";
+      res+= "+------+\n";
     }
     return res;
   }
