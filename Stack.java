@@ -30,6 +30,28 @@ public class Stack {
     return x;
   }
 
+  public void drop() {
+    if(!this.isEmpty()){
+      stack[--stackPointer] = null;
+    }
+  }
+
+  public void swap() throws NotEnoughOperandsException {
+    if(this.enoughOperand()){
+      Stackable x = this.pop();
+      Stackable y = this.pop();
+      this.push(x);
+      this.push(y);
+    } else {
+      throw new NotEnoughOperandsException();
+    }
+  }
+
+  public void clear() {
+    stackPointer = 0;
+    stack = new Stackable[MAX];
+  }
+
   public void add() throws NotEnoughOperandsException{
     if(this.enoughOperand()){
       Stackable x = this.pop();
@@ -63,12 +85,19 @@ public class Stack {
     }
   }
 
-  public void div() throws NotEnoughOperandsException{
+  public void div() throws NotEnoughOperandsException, ZeroDivisionException{
     if(this.enoughOperand()){
       Stackable x = this.pop();
       Stackable y = this.pop();
-      Stackable result = y.div(x);
-      this.push(result);
+      if(x.isNull()) {
+        this.push(y);
+        this.push(x);
+        System.out.println("dic zero stack");
+        throw new ZeroDivisionException();
+      } else {
+        Stackable result = y.div(x);
+        this.push(result);
+      }
     } else {
       throw new NotEnoughOperandsException();
     }

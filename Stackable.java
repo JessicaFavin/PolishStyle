@@ -17,12 +17,20 @@ public class Stackable {
     return new Stackable(this.value * obj.getValue());
   }
 
-  public Stackable div(Stackable obj) {
+  public Stackable div(Stackable obj) throws ZeroDivisionException {
+    if(obj.getValue()==0){
+      System.out.println("dic zero stackable");
+      throw new ZeroDivisionException();
+    }
     return new Stackable(this.value / obj.getValue());
   }
 
-  public int getValue() {
+  private int getValue() {
     return this.value;
+  }
+
+  public boolean isNull(){
+    return this.value==0;
   }
 
   @Override

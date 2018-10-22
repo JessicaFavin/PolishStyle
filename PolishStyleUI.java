@@ -1,115 +1,190 @@
 import java.util.Scanner;
+import java.util.NoSuchElementException;
+import java.util.InputMismatchException;
 import java.io.*;
+import java.net.*;
 
 public class PolishStyleUI {
 
   private int mode;
+  private int remote;
+  private Socket socket;
+  private InputStream userInput;
+  private PrintStream userOutput;
+  private Scanner sc;
+  private File file;
+  private FileOutputStream fos;
 
   public PolishStyleUI() {
-    this(1);
+    this.mode = 1;
+    this.remote = 0;
+
+    sc = new Scanner(System.in);
+
+    this.setRemote();
+    this.setMode();
+    this.run();
+
   }
 
-  public PolishStyleUI(int mode) {
-    this.mode = mode;
+  public void setRemote() {
+    menuRemote();
+    initRemote();
   }
 
-  public void setMode(int mode) {
-    this.mode = mode;
+  private void menuRemote() {
+    System.out.println("Run 0.locally or 1.remotely ?");
+    boolean wrongInput = true;
+    do {
+      try {
+        this.remote = sc.nextInt();
+        if(this.remote==0 || this.remote==1) {
+          wrongInput = false;
+        }
+      } catch(InputMismatchException ime) {
+        //flush scanner content
+        sc.nextLine();
+      }
+    } while(wrongInput);
+  }
+
+  private void initRemote() {
+    if(this.remote==0) {
+      userInput = System.in;
+      userOutput = System.out;
+    } else {
+      //remote TCP conenxion
+      try{
+        ServerSocket serversocket = new ServerSocket(1111);
+        System.out.println("Waiting for client to connect.");
+        socket = serversocket.accept();
+        System.out.println("Client connected !");
+        userInput = socket.getInputStream();
+        userOutput = new PrintStream(socket.getOutputStream());
+      } catch (IOException ioe) {
+        System.out.println("Problem while connecting to client. Bye.");
+        System.exit(4);
+      }
+    }
+    sc = new Scanner(userInput);
+  }
+
+  public void setMode() {
+    menuMode();
+    initMode();
+  }
+
+  private void menuMode() {
+    boolean wrongInput = true;
+    userOutput.println("Select a mode :");
+    userOutput.println("1. Run interpretor");
+    userOutput.println("2. Run interpretor + log input");
+    userOutput.println("3. Run from log file");
+    do {
+      try {
+        this.mode = sc.nextInt();
+        if(this.mode>0 && this.mode<4){
+          wrongInput = false;
+        }
+      } catch(InputMismatchException ime) {
+        //flush scanner content
+        sc.nextLine();
+      }
+    } while(wrongInput);
+  }
+
+  private void initMode() {
+    if(this.mode==3) {
+      try{
+        file = new File("polish_style.log");
+        if(file.exists()){
+          sc = new Scanner(file);
+        } else {
+          userOutput.println("No polish_style.log log file found.");
+          System.exit(2);
+        }
+      } catch (FileNotFoundException fnfe) {
+        userOutput.println("No polish_style.log log file found.");
+      }
+    } else if (this.mode==2){
+      try {
+        file = new File("polish_style.log");
+        file.createNewFile();
+        fos = new FileOutputStream(file, false);
+      } catch (FileNotFoundException fnfe) {
+        userOutput.println("No polish_style.log log file found.");
+      } catch (IOException ioe) {
+        userOutput.println("I/O excpetion.");
+      }
+      sc = new Scanner(userInput);
+    } else {
+      sc = new Scanner(userInput);
+    }
   }
 
   public void run(){
-    switch(mode){
-      case 1:
-        //interpet mode
-        this.runInterpretor();
-        break;
-      case 2:
-        //interpet + log mode
-        this.runLogging();
-        break;
-      case 3:
-        //replay log mode
-        this.runLogFile();
-        break;
-      default:
-        break;
-    }
-  }
-
-  public void runInterpretor() {
     Stack stack = new Stack();
     boolean stop = false;
-    String input;
-
-    System.out.println("-------------------Interpretor mode-------------------");
-    System.out.println("Press q to quit");
-    System.out.println("Anything other than number or operand will be ignored");
-    while (!stop) {
-      //readInstruction
-      System.out.println(stack);
-      input = readInstruction();
-      if(input.equals("q")) {
-        stop = true;
-        break;
-      }
-      executeInstruction(stack, input);
-    }
-  }
-
-  public void runLogging() {
-    Stack stack = new Stack();
-    boolean stop = false;
-    String input;
+    String input = "";
     String validInput;
-    File file = new File("polish_style.log");
-    FileOutputStream fos;
     try{
-      file.createNewFile();
-      fos = new FileOutputStream(file, false);
-      System.out.println("-------------------Log mode-------------------");
-      System.out.println("Press q to quit");
-      System.out.println("Anything other than number or operand will be ignored");
+      userOutput.println("Press q to quit");
+      userOutput.println("Anything other than number or operand will be ignored");
       while (!stop) {
-        System.out.println(stack);
-        input = readInstruction();
+        userOutput.println(stack);
+        try{
+          input = readInstruction();
+        } catch (NoSuchElementException nsee){
+          //Done reading File
+          System.exit(0);
+        }
         if(input.equals("q")) {
           stop = true;
+          if(this.isRemote()){
+            socket.close();
+          }
           break;
         }
         validInput = executeInstruction(stack, input);
-        fos.write(validInput.getBytes());
+        userOutput.println("Running : "+validInput);
+        if(this.logMode()&&!validInput.equals("")){
+          validInput += "\n";
+          fos.write(validInput.getBytes());
+        }
       }
-      fos.write("\n".getBytes());
-      fos.close();
-    } catch(FileNotFoundException fnfe) {
-      //this should not happen
-    }catch(IOException ioe) {
-      System.out.println("IO exception");
+      if(this.logMode()){
+        fos.close();
+      }
+      if(this.isRemote()){
+        socket.close();
+      }
+    } catch(IOException ioe) {
+      userOutput.println("IO exception");
       System.exit(1);
     }
   }
 
-  public void runLogFile() {
-    System.out.println("-------------------File mode-------------------");
-    //to do
-    //for each line read print import junit.framework.TestCase;
-    //execute it
-    //print stack
+  private boolean logMode() {
+    return this.mode ==2;
   }
 
-  public String readInstruction(){
-    Scanner sc = new Scanner(System.in);
+  private boolean isRemote() {
+    return this.remote==1;
+  }
+
+  private String readInstruction(){
     String input = sc.nextLine();
     return input;
   }
 
-  public String executeInstruction(Stack stack, String input) {
+  private String executeInstruction(Stack stack, String input) {
     String validInput = "";
     String[] parts = input.split(" ");
     for(String s : parts) {
       try{
         int value = Integer.parseInt(s);
         Stackable obj = new Stackable(value);
+        //default operation
         stack.push(obj);
         validInput += s+" ";
       } catch(NumberFormatException nfe) {
@@ -132,11 +207,33 @@ public class PolishStyleUI {
               stack.div();
               validInput += s+" ";
               break;
-            default:
+            /*
+            case "pop":
+              Stackable obj = stack.pop();
+              userOutput.println("Object popped : "+obj);
+              validInput += s+" ";
               break;
+            */
+            case "drop":
+              stack.drop();
+              validInput += s+" ";
+              break;
+            case "swap":
+              stack.swap();
+              validInput += s+" ";
+              break;
+            case "clear":
+              stack.clear();
+              validInput += s+" ";
+              break;
+            default:
+            break;
           }
         } catch(NotEnoughOperandsException neoe) {
-          System.out.println("Not enough operand in the stack.");
+          userOutput.println("Not enough operand in the stack.");
+        } catch (ZeroDivisionException zde) {
+          System.out.println("Division by 0??");
+          userOutput.println("Division by 0 not allowed.");
         }
       }
     }
