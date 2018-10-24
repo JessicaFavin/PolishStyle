@@ -136,20 +136,17 @@ public class PolishStyleUI {
       userOutput.println("Anything other than number or operand will be ignored");
       while (!stop) {
         userOutput.println(stack);
-        if(sc.hasNextLine()){
-          input = readInstruction();
-        } else {
+        if(!sc.hasNextLine()){
           //No more input to read (EOF or Ctrl+D)
           System.exit(4);
         }
+        input = readInstruction();
         if(input.equals("q")) {
           stop = true;
-          if(this.isRemote()){
-            socket.close();
-          }
           break;
         }
         validInput = executeInstruction(stack, input);
+        //non empty instruction
         if(!validInput.trim().equals("")){
           userOutput.println("Running : "+validInput);
           if(this.logMode()){
@@ -233,7 +230,8 @@ public class PolishStyleUI {
               validInput += s+" ";
               break;
             default:
-            break;
+              //ignore unrecognized instruction
+              break;
           }
         } catch(NotEnoughOperandsException neoe) {
           userOutput.println("Not enough operand in the stack.");
