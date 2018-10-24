@@ -184,9 +184,8 @@ public class PolishStyle {
     for(String s : parts) {
       try{
         int value = Integer.parseInt(s);
-        Stackable obj = new Stackable(value);
         //default operation
-        stack.push(obj);
+        stack.push(new StackableInt(value));
         validInput += s+" ";
       } catch(NumberFormatException nfe) {
         String operator = s;
