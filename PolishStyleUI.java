@@ -63,7 +63,7 @@ public class PolishStyleUI {
         userOutput = new PrintStream(socket.getOutputStream());
       } catch (IOException ioe) {
         System.out.println("Problem while connecting to client. Bye.");
-        System.exit(4);
+        System.exit(3);
       }
     }
     sc = new Scanner(userInput);
@@ -105,16 +105,20 @@ public class PolishStyleUI {
         }
       } catch (FileNotFoundException fnfe) {
         userOutput.println("No polish_style.log log file found.");
+        System.exit(2);
       }
     } else if (this.mode==2){
       try {
         file = new File("polish_style.log");
+        //create file only if it doesn't exist
         file.createNewFile();
         fos = new FileOutputStream(file, false);
       } catch (FileNotFoundException fnfe) {
         userOutput.println("No polish_style.log log file found.");
+        System.exit(2);
       } catch (IOException ioe) {
-        userOutput.println("I/O excpetion.");
+        userOutput.println("I/O exception.");
+        System.exit(1);
       }
       sc = new Scanner(userInput);
     } else {
@@ -132,11 +136,11 @@ public class PolishStyleUI {
       userOutput.println("Anything other than number or operand will be ignored");
       while (!stop) {
         userOutput.println(stack);
-        try{
+        if(sc.hasNextLine()){
           input = readInstruction();
-        } catch (NoSuchElementException nsee){
-          //Done reading File ?
-          System.exit(0);
+        } else {
+          //No more input to read (EOF or Ctrl+D)
+          System.exit(4);
         }
         if(input.equals("q")) {
           stop = true;
