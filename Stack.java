@@ -92,7 +92,6 @@ public class Stack {
       if(x.isNull()) {
         this.push(y);
         this.push(x);
-        System.out.println("dic zero stack");
         throw new ZeroDivisionException();
       } else {
         Stackable result = y.div(x);

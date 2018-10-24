@@ -135,7 +135,7 @@ public class PolishStyleUI {
         try{
           input = readInstruction();
         } catch (NoSuchElementException nsee){
-          //Done reading File
+          //Done reading File ?
           System.exit(0);
         }
         if(input.equals("q")) {
@@ -146,10 +146,12 @@ public class PolishStyleUI {
           break;
         }
         validInput = executeInstruction(stack, input);
-        userOutput.println("Running : "+validInput);
-        if(this.logMode()&&!validInput.equals("")){
-          validInput += "\n";
-          fos.write(validInput.getBytes());
+        if(!validInput.trim().equals("")){
+          userOutput.println("Running : "+validInput);
+          if(this.logMode()){
+            validInput += "\n";
+            fos.write(validInput.getBytes());
+          }
         }
       }
       if(this.logMode()){
@@ -232,7 +234,6 @@ public class PolishStyleUI {
         } catch(NotEnoughOperandsException neoe) {
           userOutput.println("Not enough operand in the stack.");
         } catch (ZeroDivisionException zde) {
-          System.out.println("Division by 0??");
           userOutput.println("Division by 0 not allowed.");
         }
       }

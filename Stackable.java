@@ -19,7 +19,6 @@ public class Stackable {
 
   public Stackable div(Stackable obj) throws ZeroDivisionException {
     if(obj.getValue()==0){
-      System.out.println("dic zero stackable");
       throw new ZeroDivisionException();
     }
     return new Stackable(this.value / obj.getValue());
