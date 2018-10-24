@@ -30,9 +30,11 @@ public class Stack {
     return x;
   }
 
-  public void drop() {
+  public void drop() throws NotEnoughOperandsException {
     if(!this.isEmpty()){
       stack[--stackPointer] = null;
+    } else {
+      throw new NotEnoughOperandsException();
     }
   }
 
