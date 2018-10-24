@@ -1,0 +1,7 @@
+Implement server HTTP in PolishStyle
+- Get request
+- Sent form page to client
+- Get response
+	GET -> url
+	POST -> data (+check content-length in header)
+- Send result page
