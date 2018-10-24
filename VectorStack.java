@@ -1,14 +1,14 @@
-public class Stack {
+public class VectorStack {
   private final int MAX = 6;
   private int stackPointer;
-  private StackableInt[] stack;
+  private StackableVector[] stack;
 
-  public Stack() {
+  public VectorStack() {
     stackPointer = 0;
-    stack = new StackableInt[MAX];
+    stack = new StackableVector[MAX];
   }
 
-  public void push(StackableInt obj) {
+  public void push(StackableVector obj) {
     if(stackPointer != MAX){
       stack[stackPointer++] = obj;
     }
@@ -21,8 +21,8 @@ public class Stack {
     return stackPointer>=2;
   }
 
-  public StackableInt pop() {
-    StackableInt x = null;
+  public StackableVector pop() {
+    StackableVector x = null;
     if(!this.isEmpty()){
       x = stack[stackPointer-1];
       stack[--stackPointer] = null;
@@ -40,8 +40,8 @@ public class Stack {
 
   public void swap() throws NotEnoughOperandsException {
     if(this.enoughOperand()){
-      StackableInt x = this.pop();
-      StackableInt y = this.pop();
+      StackableVector x = this.pop();
+      StackableVector y = this.pop();
       this.push(x);
       this.push(y);
     } else {
@@ -51,14 +51,14 @@ public class Stack {
 
   public void clear() {
     stackPointer = 0;
-    stack = new StackableInt[MAX];
+    stack = new StackableVector[MAX];
   }
 
   public void add() throws NotEnoughOperandsException{
     if(this.enoughOperand()){
-      StackableInt x = this.pop();
-      StackableInt y = this.pop();
-      StackableInt result = y.add(x);
+      StackableVector x = this.pop();
+      StackableVector y = this.pop();
+      StackableVector result = y.add(x);
       this.push(result);
     } else {
       throw new NotEnoughOperandsException();
@@ -67,9 +67,9 @@ public class Stack {
 
   public void sub() throws NotEnoughOperandsException{
     if(this.enoughOperand()){
-      StackableInt x = this.pop();
-      StackableInt y = this.pop();
-      StackableInt result = y.sub(x);
+      StackableVector x = this.pop();
+      StackableVector y = this.pop();
+      StackableVector result = y.sub(x);
       this.push(result);
     } else {
       throw new NotEnoughOperandsException();
@@ -78,25 +78,25 @@ public class Stack {
 
   public void mult() throws NotEnoughOperandsException{
     if(this.enoughOperand()){
-      StackableInt x = this.pop();
-      StackableInt y = this.pop();
-      StackableInt result = y.mult(x);
+      StackableVector x = this.pop();
+      StackableVector y = this.pop();
+      StackableVector result = y.mult(x);
       this.push(result);
     } else {
       throw new NotEnoughOperandsException();
     }
   }
 
-  public void div() throws NotEnoughOperandsException, ZeroDivisionException{
+  public void div() throws NotEnoughOperandsException, ZeroDivisionException {
     if(this.enoughOperand()){
-      StackableInt x = this.pop();
-      StackableInt y = this.pop();
+      StackableVector x = this.pop();
+      StackableVector y = this.pop();
       if(x.isNull()) {
         this.push(y);
         this.push(x);
         throw new ZeroDivisionException();
       } else {
-        StackableInt result = y.div(x);
+        StackableVector result = y.div(x);
         this.push(result);
       }
     } else {
@@ -107,17 +107,17 @@ public class Stack {
   @Override
   public String toString() {
     String res = "";
-    StackableInt obj;
-    res+= "+------+\n";
+    StackableVector obj;
+    res+= "+----------+\n";
     for(int i=MAX; i>0; i--) {
       res += ("| ");
       if((obj = stack[i-1])!=null) {
-        res += String.format("%4s", obj.toString());
+        res += String.format("%8s", obj.toString());
       } else {
-        res += "    ";
+        res += "        ";
       }
       res += (" |\n");
-      res+= "+------+\n";
+      res+= "+----------+\n";
     }
     return res;
   }

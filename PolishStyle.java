@@ -1,8 +1,9 @@
+import java.io.*;
+import java.net.*;
+import java.util.regex.*;
 import java.util.Scanner;
 import java.util.NoSuchElementException;
 import java.util.InputMismatchException;
-import java.io.*;
-import java.net.*;
 
 public class PolishStyle {
 
@@ -121,7 +122,7 @@ public class PolishStyle {
   }
 
   public void mainLoop() {
-    Stack stack = new Stack();
+    VectorStack stack = new VectorStack();
     boolean stop = false;
     String input = "";
     String validInput;
@@ -160,7 +161,7 @@ public class PolishStyle {
         socket.close();
       }
     } catch(IOException ioe) {
-      userOutput.println("IO exception");
+      userOutput.println("I/O exception");
       System.exit(1);
     }
   }
@@ -178,46 +179,116 @@ public class PolishStyle {
     return input;
   }
 
-  private String executeInstruction(Stack stack, String input) {
+  private String executeInstruction(VectorStack stack, String input) {
     String validInput = "";
+    //validInput += readStackableInt();
+    validInput += readStackableVector(stack, input);
+    return validInput;
+  }
+/*
+  private String readStackableInt(Stack stack, String input) {
     String[] parts = input.split(" ");
-    for(String s : parts) {
+    for(String part : parts) {
       try{
         int value = Integer.parseInt(s);
         //default operation
         stack.push(new StackableInt(value));
-        validInput += s+" ";
+        validInput += part+" ";
       } catch(NumberFormatException nfe) {
-        String operator = s;
+        String operator = part;
         try{
           switch(operator) {
             case "+":
               stack.add();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "-":
               stack.sub();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "*":
               stack.mult();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "/":
               stack.div();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "drop":
               stack.drop();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "swap":
               stack.swap();
-              validInput += s+" ";
+              validInput += part+" ";
               break;
             case "clear":
               stack.clear();
-              validInput += s+" ";
+              validInput += part+" ";
+              break;
+            default:
+              //ignore unrecognized instruction
+              break;
+          }
+        } catch(NotEnoughOperandsException neoe) {
+          userOutput.println("Not enough operand in the stack.");
+        } catch (ZeroDivisionException zde) {
+          userOutput.println("Division by 0 not allowed.");
+        }
+      }
+    }
+  }
+*/
+  private String readStackableVector(VectorStack stack, String input) {
+    String validInput = "";
+    String[] parts = input.split(" ");
+    for(String part : parts) {
+
+      int x =0, y =0;
+      Pattern pattern = Pattern.compile("\\(?(\\d+),(\\d+)\\)?");
+      Matcher matcher = pattern.matcher(part);
+      if(matcher.find()) {
+          try {
+            x = Integer.parseInt(matcher.group(1));
+            y = Integer.parseInt(matcher.group(2));
+            //default operation
+            stack.push(new StackableVector(x,y));
+            validInput += part+" ";
+          } catch(NumberFormatException nfe) {
+            userOutput.println("What have you done now ? Plz stahp T.T");
+          }
+
+      } else {
+        String operator = part;
+        try{
+          switch(operator) {
+            case "+":
+              stack.add();
+              validInput += part+" ";
+              break;
+            case "-":
+              stack.sub();
+              validInput += part+" ";
+              break;
+            case "*":
+              stack.mult();
+              validInput += part+" ";
+              break;
+            case "/":
+              stack.div();
+              validInput += part+" ";
+              break;
+            case "drop":
+              stack.drop();
+              validInput += part+" ";
+              break;
+            case "swap":
+              stack.swap();
+              validInput += part+" ";
+              break;
+            case "clear":
+              stack.clear();
+              validInput += part+" ";
               break;
             default:
               //ignore unrecognized instruction
