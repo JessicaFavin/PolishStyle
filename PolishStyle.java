@@ -3,6 +3,12 @@ import java.util.NoSuchElementException;
 import java.util.InputMismatchException;
 import java.io.*;
 import java.net.*;
+import static java.net.URLDecoder.decode;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class PolishStyle {
 
@@ -14,32 +20,39 @@ public class PolishStyle {
   private Scanner sc;
   private File logFile;
   private FileOutputStream fos;
+  private static HashMap<String, String> request;
 
   public PolishStyle() {
     //launch locally by default
-    initPolishStyle(0);
+    initPolishStyle(0, false);
   }
 
 
   public PolishStyle(String[] args) {
     if(args.length == 1 && (args[0].equals("--remote") || args[0].equals("-r"))){
-      initPolishStyle(1);
+      initPolishStyle(1, false);
+    } else if(args.length == 1 && (args[0].equals("--http-server") || args[0].equals("-s"))){
+      initPolishStyle(0, true);
     } else if(args.length == 0){
-      initPolishStyle(0);
+      initPolishStyle(0, false);
     } else {
       System.out.println("java PolishStyle [-r|--remote]");
     }
   }
 
-  public void initPolishStyle(int remote) {
+  public void initPolishStyle(int remote, boolean httpServer) {
     this.mode = 1;
     this.remote = remote;
 
     sc = new Scanner(System.in);
 
-    this.initRemote();
-    this.setMode();
-    this.mainLoop();
+    if(!httpServer){
+      this.initRemote();
+      this.setMode();
+      this.mainLoop();
+    } else {
+      this.httpServer();
+    }
   }
 
   private void initRemote() {
@@ -232,6 +245,125 @@ public class PolishStyle {
       }
     }
     return validInput;
+  }
+
+  public String sendForm() {
+    String res = "";
+    Date dNow = new Date();
+    SimpleDateFormat ft = new SimpleDateFormat("E, dd MMM yyyy hh:mm:ss", Locale.US);
+    String filename = "index.html";
+    dNow = new Date();
+    res = "";
+    res += "HTTP/1.1 200 OK\r\n"
+            + "Date: " + ft.format(dNow) + " GMT\r\n"
+            + "Server: Mine\r\n"
+            + "Content-Type: text/html; charset=UTF-8\r\n"
+            + "Connection: keep-alive\r\n";
+    //sent file content
+    //----------------------> content length
+    try{
+      String content = "";
+      int contentLength = 0;
+      List<String> fileContent = Files.readAllLines(Paths.get(".",filename), Charset.forName("utf-8"));
+      for(String line: fileContent) {
+        content += line+"\r\n";
+        contentLength += line.length();
+      }
+      res += "Content-Length: "+contentLength;
+      res += ("\r\n");
+      res += content;
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    res += ("\r\n");
+    System.out.println(res);
+    return res;
+  }
+
+  public String send404() {
+    Date dNow = new Date();
+    SimpleDateFormat ft = new SimpleDateFormat("E, dd MMM yyyy hh:mm:ss", Locale.US);
+    String res = "";
+    res += "HTTP/1.1 404 Not Found\r\n"
+            + "Date: " + ft.format(dNow) + " GMT\r\n"
+            + "Server: Mine\r\n"
+            + "Content-Type: text/html; charset=UTF-8\r\n"
+            + "Connection: close\r\n";
+    res += ("\r\n");
+    return res;
+  }
+
+  public void httpServer() {
+    try{
+      //init Server connexion
+      ServerSocket serversocket = new ServerSocket(8080);
+      System.out.println("Waiting for client to connect.");
+      socket = serversocket.accept();
+      System.out.println("Browser connected !");
+      userInput = socket.getInputStream();
+      sc = new Scanner(userInput);
+      userOutput = new PrintStream(socket.getOutputStream());
+      request = new HashMap<String, String>();
+      String input;
+      String output;
+      //---------------------read index page request----------------------------
+      while ((input = sc.nextLine())!=null&&!input.equals("")) {
+        System.out.println(input);
+        String[] res  = input.split(" ", 2);
+        String key = res[0].replaceFirst(":","").trim();
+        String value = res[1].trim();
+        request.put(key, value);
+      }
+      //------------------------send index page --------------------------------
+      if(request.get("GET")!=null){
+        /*
+        GET /index.html HTTP/1.1
+        Host: localhost:8080
+        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0
+        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,;q=0.8
+        Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+        Accept-Encoding: gzip, deflate
+        Connection: keep-alive
+        Upgrade-Insecure-Requests: 1
+        DNT: 1
+        */
+        String filename = request.get("GET").split(" ")[0];
+        filename = decode(filename, "UTF-8");
+        if(filename.equals("/") || filename.equals("/index.html")){
+          filename = filename.replace("/", "");
+          userOutput.print(sendForm());
+        } else {
+          userOutput.print(send404());
+        }
+      }
+      /*
+      userOutput.close();
+      userInput.close();
+      socket.close();
+      //--------------------read calculation request----------------------------
+      socket = serversocket.accept();
+      System.out.println("Browser re-connected !");
+      userInput = socket.getInputStream();
+      sc = new Scanner(userInput);
+      userOutput = new PrintStream(socket.getOutputStream());
+      */
+      request = new HashMap<String, String>();
+
+      while ((input = sc.nextLine())!=null&&!input.equals("")) {
+        System.out.println(input);
+        /*
+        String[] res  = input.split(" ", 2);
+        String key = res[0].replaceFirst(":","").trim();
+        String value = res[1].trim();
+        request.put(key, value);
+        */
+      }
+      System.exit(12);
+      //---------------------send calculation result----------------------------
+    } catch (IOException ioe) {
+      System.out.println("Problem while connecting to client. Bye.");
+      System.exit(3);
+    }
   }
 
   public static void main(String[] args) {
