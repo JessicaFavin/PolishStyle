@@ -104,6 +104,23 @@ public class Stack {
     }
   }
 
+  public String toHTML() {
+    String res = "";
+    Stackable obj;
+    res+= "+------+</br>";
+    for(int i=MAX; i>0; i--) {
+      res += ("| ");
+      if((obj = stack[i-1])!=null) {
+        res += String.format("%4s", obj.toString());
+      } else {
+        res += "    ";
+      }
+      res += ("</br>");
+      res+= "+------+</br>";
+    }
+    return res;
+  }
+
   @Override
   public String toString() {
     String res = "";

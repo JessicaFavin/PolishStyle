@@ -36,7 +36,7 @@ public class PolishStyle {
     } else if(args.length == 0){
       initPolishStyle(0, false);
     } else {
-      System.out.println("java PolishStyle [-r|--remote]");
+      System.out.println("java PolishStyle [-r|--remote|-s|--http-server]");
     }
   }
 
@@ -247,11 +247,10 @@ public class PolishStyle {
     return validInput;
   }
 
-  public String sendForm() {
+  public String sendForm(Stack stack) {
     String res = "";
     Date dNow = new Date();
     SimpleDateFormat ft = new SimpleDateFormat("E, dd MMM yyyy hh:mm:ss", Locale.US);
-    String filename = "index.html";
     dNow = new Date();
     res = "";
     res += "HTTP/1.1 200 OK\r\n"
@@ -261,22 +260,19 @@ public class PolishStyle {
             + "Connection: keep-alive\r\n";
     //sent file content
     //----------------------> content length
-    try{
-      String content = "";
-      int contentLength = 0;
-      List<String> fileContent = Files.readAllLines(Paths.get(".",filename), Charset.forName("utf-8"));
-      for(String line: fileContent) {
-        content += line+"\r\n";
-        contentLength += line.length();
-      }
-      res += "Content-Length: "+contentLength;
-      res += ("\r\n");
-      res += content;
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
+    String content = "";
+
+    content += "<!DOCTYPE html>\r\n<html>\r\n<body>\r\n<h2>Reverse Polish calculator</h2>\r\n";
+    content += stack.toHTML();
+    content += "<form method=\"get\" action=\"\">\r\nGive me reverse polish calculation:<br>\r\n";
+    content += "<input type=\"textarea\" name=\"calc\" autofocus>\r\n<br><br>\r\n<input type=\"submit\" value=\"Submit\">\r\n</form>\r\n";
+    content += "<p>Click Submit to sent.</p>\r\n</body>\r\n</html>\r\n";
+
+    res += "Content-Length: "+content.length();
+    res += ("\r\n\r\n");
+    res += content;
+
     res += ("\r\n");
-    System.out.println(res);
     return res;
   }
 
@@ -298,17 +294,17 @@ public class PolishStyle {
       //init Server connexion
       ServerSocket serversocket = new ServerSocket(8080);
       System.out.println("Waiting for client to connect.");
+      String input;
+      String output;
+      Stack stack = new Stack();
       socket = serversocket.accept();
       System.out.println("Browser connected !");
       userInput = socket.getInputStream();
       sc = new Scanner(userInput);
       userOutput = new PrintStream(socket.getOutputStream());
       request = new HashMap<String, String>();
-      String input;
-      String output;
       //---------------------read index page request----------------------------
       while ((input = sc.nextLine())!=null&&!input.equals("")) {
-        System.out.println(input);
         String[] res  = input.split(" ", 2);
         String key = res[0].replaceFirst(":","").trim();
         String value = res[1].trim();
@@ -316,50 +312,41 @@ public class PolishStyle {
       }
       //------------------------send index page --------------------------------
       if(request.get("GET")!=null){
-        /*
-        GET /index.html HTTP/1.1
-        Host: localhost:8080
-        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0
-        Accept: text/html,application/xhtml+xml,application/xml;q=0.9,;q=0.8
-        Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
-        Accept-Encoding: gzip, deflate
-        Connection: keep-alive
-        Upgrade-Insecure-Requests: 1
-        DNT: 1
-        */
+
         String filename = request.get("GET").split(" ")[0];
         filename = decode(filename, "UTF-8");
-        if(filename.equals("/") || filename.equals("/index.html")){
-          filename = filename.replace("/", "");
-          userOutput.print(sendForm());
+        if(filename.equals("/")){
+          userOutput.print(sendForm(stack));
         } else {
           userOutput.print(send404());
         }
       }
-      /*
-      userOutput.close();
-      userInput.close();
-      socket.close();
-      //--------------------read calculation request----------------------------
-      socket = serversocket.accept();
-      System.out.println("Browser re-connected !");
-      userInput = socket.getInputStream();
-      sc = new Scanner(userInput);
-      userOutput = new PrintStream(socket.getOutputStream());
-      */
-      request = new HashMap<String, String>();
 
-      while ((input = sc.nextLine())!=null&&!input.equals("")) {
-        System.out.println(input);
-        /*
-        String[] res  = input.split(" ", 2);
-        String key = res[0].replaceFirst(":","").trim();
-        String value = res[1].trim();
-        request.put(key, value);
-        */
+      while(true) {
+        request = new HashMap<String, String>();
+
+        while ((input = sc.nextLine())!=null&&!input.equals("")) {
+          String[] res  = input.split(" ", 2);
+          String key = res[0].replaceFirst(":","").trim();
+          String value = res[1].trim();
+          request.put(key, value);
+        }
+        //---------------------send calculation result----------------------------
+        if(request.get("GET")!=null){
+
+          String filename = request.get("GET").split(" ")[0];
+          if(filename.startsWith("/?calc=")){
+            String calc = java.net.URLDecoder.decode(filename, "UTF-8");
+            calc = calc.replace("/?calc=", "");
+            executeInstruction(stack, calc);
+            userOutput.print(sendForm(stack));
+          } else {
+            userOutput.print(send404());
+          }
+        }
+
       }
-      System.exit(12);
-      //---------------------send calculation result----------------------------
+
     } catch (IOException ioe) {
       System.out.println("Problem while connecting to client. Bye.");
       System.exit(3);
