@@ -14,6 +14,7 @@ public class PolishStyle {
 
   private int mode;
   private int remote;
+  private boolean httpServer;
   private Socket socket;
   private InputStream userInput;
   private PrintStream userOutput;
@@ -43,7 +44,7 @@ public class PolishStyle {
   public void initPolishStyle(int remote, boolean httpServer) {
     this.mode = 1;
     this.remote = remote;
-
+    this.httpServer = httpServer;
     sc = new Scanner(System.in);
 
     if(!httpServer){
@@ -238,9 +239,13 @@ public class PolishStyle {
               break;
           }
         } catch(NotEnoughOperandsException neoe) {
-          userOutput.println("Not enough operand in the stack.");
+          if(!httpServer) {
+            userOutput.println("Not enough operand in the stack.");
+          }
         } catch (ZeroDivisionException zde) {
-          userOutput.println("Division by 0 not allowed.");
+          if(!httpServer) {
+            userOutput.println("Division by 0 not allowed.");
+          }
         }
       }
     }
@@ -315,7 +320,7 @@ public class PolishStyle {
 
         String filename = request.get("GET").split(" ")[0];
         filename = decode(filename, "UTF-8");
-        if(filename.equals("/")){
+        if(filename.equals("/") || filename.startsWith("/?calc=") ){
           userOutput.print(sendForm(stack));
         } else {
           userOutput.print(send404());
