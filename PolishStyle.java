@@ -140,12 +140,14 @@ public class PolishStyle {
     String input = "";
     String validInput;
     try{
-      userOutput.println("-------------------------------------------------------\n"+
-      "Press q to quit\n"+
-      "Default operation is push\n"+
-      "Operators are : + - * / drop swap clear\n"+
-      "Anything other than operand or operator will be ignored\n"+
-      "-------------------------------------------------------");
+      if(this.mode!=3){
+        userOutput.println("-------------------------------------------------------\n"+
+        "Press q to quit\n"+
+        "Default operation is push\n"+
+        "Operators are : + - * / drop swap clear\n"+
+        "Anything other than operand or operator will be ignored\n"+
+        "-------------------------------------------------------");
+      }
       while (!stop) {
         userOutput.println(stack);
         if(!sc.hasNextLine()){
